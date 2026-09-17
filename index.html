@@ -1,117 +1,599 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="zh-Hant">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Software-patents — 目錄與說明</title>
-  <link rel="stylesheet" href="assets/style.css">
-  <meta name="referrer" content="no-referrer">
-</head>
-<body>
-  <header>
-    <h1>Software-patents</h1>
-    <p class="subtitle">網站目錄與 README（自動更新）</p>
-    <nav>
-      <a href="https://cjs930.github.io/Software-patents/" target="_blank">網站首頁</a>
-    </nav>
-  </header>
-
-  <main class="container">
-    <aside id="sidebar">
-      <h2>目錄</h2>
-      <div id="file-list">載入中…</div>
-    </aside>
-
-    <section id="content">
-      <h2>README</h2>
-      <div id="readme">載入 README.md…</div>
-    </section>
-  </main>
-
-  <footer>
-    <small>自動由 GitHub 倉庫讀取內容 — 資料來源: cjs930/Software-patents</small>
-  </footer>
-
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script>
-    const owner = 'cjs930';
-    const repo = 'Software-patents';
-    const branch = 'main';
-    const siteBase = 'https://cjs930.github.io/Software-patents/';
-
-    async function fetchContents(path = ''){
-      const api = `https://api.github.com/repos/${owner}/${repo}/contents/${path}?ref=${branch}`;
-      const res = await fetch(api);
-      if(!res.ok) throw new Error('無法取得目錄');
-      return res.json();
-    }
-
-    function createListItem(item){
-      const el = document.createElement('div');
-      el.className = 'item ' + item.type;
-      const name = document.createElement('span');
-      name.textContent = item.name;
-      el.appendChild(name);
-
-      const link = document.createElement('a');
-      link.textContent = '開新頁';
-      link.target = '_blank';
-      if(item.type === 'dir'){
-        // link to the site directory (assumes gh-pages serves)
-        link.href = siteBase + item.path + '/';
-      } else {
-        link.href = siteBase + item.path;
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Software-patents — 目錄與說明</title>
+    <meta
+      name="description"
+      content="Software-patents 網站目錄與 README。"
+    />
+    <style>
+      :root {
+        --bg: #f3f6fb;
+        --panel: #ffffff;
+        --panel-alt: #f8fafc;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #dfe7f4;
+        --primary: #2563eb;
+        --primary-soft: rgba(37, 99, 235, 0.08);
+        --shadow: 0 16px 36px rgba(15, 23, 42, 0.08);
       }
-      el.appendChild(link);
-      return el;
-    }
 
-    async function renderFileList(){
-      const listContainer = document.getElementById('file-list');
-      listContainer.innerHTML = '';
-      try{
-        const items = await fetchContents('');
-        // sort: dirs first, then files
-        items.sort((a,b)=> (a.type===b.type? a.name.localeCompare(b.name) : (a.type==='dir'?-1:1)));
-        items.forEach(item=>{
-          const li = createListItem(item);
-          listContainer.appendChild(li);
-        });
-      }catch(err){
-        listContainer.textContent = '載入目錄失敗: ' + err.message;
+      * {
+        box-sizing: border-box;
       }
-    }
 
-    async function renderReadme(){
-      const target = document.getElementById('readme');
-      try{
-        const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/README.md`;
-        const r = await fetch(rawUrl);
-        if(!r.ok) throw new Error('無法取得 README.md');
-        const md = await r.text();
-        const html = marked.parse(md);
-        target.innerHTML = html;
-        // convert relative links to open in new tab and point to siteBase when appropriate
-        const anchors = target.querySelectorAll('a');
-        anchors.forEach(a=>{
-          const href = a.getAttribute('href');
-          if(!href) return;
-          if(href.startsWith('http')){
-            a.target = '_blank';
-            return;
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
+        background: linear-gradient(180deg, #f7f9fc 0%, #edf3ff 100%);
+        color: var(--text);
+      }
+
+      a {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .site-header {
+        background: linear-gradient(120deg, #0f172a 0%, #1e293b 100%);
+        color: white;
+        box-shadow: var(--shadow);
+      }
+
+      .site-header-inner,
+      .container {
+        width: min(1200px, calc(100% - 32px));
+        margin: 0 auto;
+      }
+
+      .site-header-inner {
+        padding: 28px 0 18px;
+      }
+
+      .site-title {
+        margin: 0;
+        font-size: clamp(2.1rem, 4vw, 3.2rem);
+        line-height: 1.2;
+        font-weight: 800;
+      }
+
+      .subtitle {
+        margin-top: 10px;
+        color: rgba(255, 255, 255, 0.82);
+        font-size: 0.98rem;
+      }
+
+      .main {
+        padding: 32px 0 56px;
+      }
+
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+
+      .panel {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+        overflow: hidden;
+      }
+
+      .panel-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 18px 20px;
+        background: var(--panel-alt);
+        border-bottom: 1px solid var(--border);
+      }
+
+      .panel-title {
+        margin: 0;
+        font-size: 1.2rem;
+        font-weight: 700;
+      }
+
+      .tiny-badge {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 0.78rem;
+        font-weight: 700;
+        border: 1px solid rgba(37, 99, 235, 0.2);
+      }
+
+      .panel-body {
+        padding: 18px 18px 20px;
+      }
+
+      .tree,
+      .tree ul {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .tree-node {
+        margin: 0;
+        padding: 0;
+      }
+
+      .tree-branch {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        min-height: 52px;
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.82);
+        margin: 8px 0;
+      }
+
+      .tree-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+        color: var(--text);
+        font-weight: 600;
+        flex: 1;
+      }
+
+      .tree-label span {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .tree-label:hover {
+        color: var(--primary);
+        text-decoration: none;
+      }
+
+      .tree-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        justify-content: flex-end;
+      }
+
+      .tree-actions a,
+      .tree-toggle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border: 1px solid rgba(37, 99, 235, 0.36);
+        background: transparent;
+        color: var(--primary);
+        border-radius: 8px;
+        padding: 6px 10px;
+        font-size: 0.82rem;
+        cursor: pointer;
+        min-width: 84px;
+        transition: 0.2s ease;
+      }
+
+      .tree-actions a:hover,
+      .tree-toggle:hover {
+        background: var(--primary-soft);
+        text-decoration: none;
+      }
+
+      .tree-toggle {
+        min-width: 34px;
+        width: 34px;
+        height: 34px;
+        padding: 0;
+        border-radius: 50%;
+        font-size: 0;
+        position: relative;
+        flex-shrink: 0;
+      }
+
+      .tree-toggle::before {
+        content: "";
+        display: block;
+        width: 0;
+        height: 0;
+        border-left: 8px solid transparent;
+        border-right: 8px solid transparent;
+        border-top: 10px solid var(--primary);
+        transition: transform 0.2s ease;
+        transform: rotate(0deg);
+      }
+
+      .tree-toggle[aria-expanded="true"]::before {
+        transform: rotate(180deg);
+      }
+
+      .tree-toggle[aria-expanded="false"]::before {
+        transform: rotate(90deg);
+      }
+
+      .tree-children {
+        margin: 0 0 0 18px;
+        padding-left: 12px;
+        border-left: 3px solid rgba(37, 99, 235, 0.75);
+        background: linear-gradient(90deg, rgba(37, 99, 235, 0.08), rgba(37, 99, 235, 0));
+      }
+
+      .tree-children > .tree-node > .tree-branch {
+        border-left: 3px solid rgba(37, 99, 235, 0.45);
+        box-shadow: inset 0 0 0 1px rgba(37, 99, 235, 0.08);
+      }
+
+      .tree-node.is-collapsed > .tree-children {
+        display: none;
+      }
+
+      .readme-content {
+        line-height: 1.8;
+        color: var(--text);
+      }
+
+      .readme-content h1,
+      .readme-content h2,
+      .readme-content h3,
+      .readme-content h4,
+      .readme-content h5,
+      .readme-content h6 {
+        margin-top: 1.5em;
+        margin-bottom: 0.6em;
+        line-height: 1.35;
+      }
+
+      .readme-content h1 {
+        font-size: clamp(1.8rem, 2.5vw, 2.6rem);
+        padding-bottom: 0.4em;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .readme-content h2 {
+        font-size: 1.45rem;
+      }
+
+      .readme-content p,
+      .readme-content li {
+        color: #1f2937;
+      }
+
+      .readme-content table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1rem 0;
+        border: 1px solid var(--border);
+      }
+
+      .readme-content th,
+      .readme-content td {
+        padding: 10px 12px;
+        border: 1px solid var(--border);
+        text-align: left;
+        vertical-align: top;
+      }
+
+      .readme-content th {
+        background: #f8fafc;
+      }
+
+      .readme-content code {
+        background: #f1f5f9;
+        border-radius: 6px;
+        padding: 0.2em 0.45em;
+        font-family: "Consolas", "Courier New", monospace;
+      }
+
+      .readme-content pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        border-radius: 12px;
+        padding: 16px;
+        overflow-x: auto;
+      }
+
+      .readme-content blockquote {
+        margin: 1rem 0;
+        padding: 0.8rem 1rem;
+        border-left: 4px solid var(--primary);
+        background: var(--primary-soft);
+        border-radius: 0 10px 10px 0;
+      }
+
+      .readme-content ul,
+      .readme-content ol {
+        padding-left: 1.5rem;
+      }
+
+      .readme-content a {
+        color: var(--primary);
+      }
+
+      .empty-state {
+        color: var(--muted);
+        padding: 12px 8px;
+      }
+
+      @media (max-width: 760px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header class="site-header">
+      <div class="site-header-inner">
+        <h1 class="site-title">Software-patents</h1>
+        <div class="subtitle">
+          <a
+            href="https://cjs930.github.io/Software-patents/"
+            target="_blank"
+            rel="noopener"
+            style="color: #fff; text-decoration: underline;"
+          >
+            HOME
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main class="main">
+      <div class="container layout">
+        <section class="panel" aria-labelledby="directory-title">
+          <div class="panel-header">
+            <h2 id="directory-title" class="panel-title">網站目錄與檔案</h2>
+          </div>
+          <div class="panel-body">
+            <ul id="repoTree" class="tree" aria-live="polite"></ul>
+          </div>
+        </section>
+
+        <section class="panel" aria-labelledby="readme-title">
+          <div class="panel-header">
+            <h2 id="readme-title" class="panel-title">README.md</h2>
+          </div>
+          <div class="panel-body">
+            <article id="readmeContent" class="readme-content">載入中...</article>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+      (function () {
+        const owner = 'cjs930';
+        const repo = 'Software-patents';
+        const branch = 'main';
+        const siteRoot = 'https://cjs930.github.io/Software-patents/';
+        const treeEl = document.getElementById('repoTree');
+        const readmeEl = document.getElementById('readmeContent');
+        const readmeTitleEl = document.getElementById('readme-title');
+
+        function renderMarkdownContent(markdown, title) {
+          const safeTitle = title || '文件內容';
+          readmeTitleEl.textContent = safeTitle;
+
+          if (window.marked && typeof window.marked.parse === 'function') {
+            readmeEl.innerHTML = window.marked.parse(markdown);
+          } else {
+            readmeEl.textContent = markdown;
           }
-          // relative -> point to site
-          a.href = siteBase + href.replace(/^\.\//,'');
-          a.target = '_blank';
-        });
-      }catch(err){
-        target.textContent = '載入 README 失敗: ' + err.message;
-      }
-    }
+        }
 
-    // 初始載入
-    renderFileList();
-    renderReadme();
-  </script>
-</body>
+        async function openMarkdownFile(node) {
+          try {
+            const rawUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${branch}/${encodeURI(node.path)}`;
+            const response = await fetch(rawUrl);
+            if (!response.ok) {
+              throw new Error('Markdown file fetch failed');
+            }
+
+            const markdown = await response.text();
+            renderMarkdownContent(markdown, node.name);
+          } catch (error) {
+            console.error(error);
+            renderMarkdownContent('無法載入該 Markdown 檔案內容，請稍後再試。', node.name || '文件內容');
+          }
+        }
+
+        function normalizeTree(items) {
+          return (items || [])
+            .filter((item) => item && item.path)
+            .filter((item) => !item.path.startsWith('.git'))
+            .filter((item) => !item.path.startsWith('.github'))
+            .filter((item) => item.path !== 'index.html')
+            .filter((item) => item.path.toLowerCase() !== 'readme.md')
+            .filter((item) => item.path !== 'js' && !item.path.startsWith('js/'))
+            .sort((a, b) => {
+              const aType = a.type === 'tree' ? 0 : 1;
+              const bType = b.type === 'tree' ? 0 : 1;
+              if (aType !== bType) return aType - bType;
+              return a.path.localeCompare(b.path, 'zh-Hant');
+            });
+        }
+
+        function buildTreeMap(items) {
+          const map = new Map();
+          const roots = [];
+
+          items.forEach((item) => {
+            const path = item.path;
+            const name = path.split('/').pop();
+            const parentPath = path.includes('/') ? path.split('/').slice(0, -1).join('/') : '';
+
+            const node = {
+              ...item,
+              name,
+              parentPath,
+              children: []
+            };
+
+            map.set(path, node);
+
+            if (!parentPath) {
+              roots.push(node);
+            }
+          });
+
+          items.forEach((item) => {
+            const parentPath = item.path.includes('/') ? item.path.split('/').slice(0, -1).join('/') : '';
+            if (parentPath && map.has(parentPath)) {
+              map.get(parentPath).children.push(map.get(item.path));
+            }
+          });
+
+          roots.forEach((root) => {
+            root.children.sort((a, b) => {
+              const aType = a.type === 'tree' ? 0 : 1;
+              const bType = b.type === 'tree' ? 0 : 1;
+              if (aType !== bType) return aType - bType;
+              return a.name.localeCompare(b.name, 'zh-Hant');
+            });
+          });
+
+          return roots;
+        }
+
+        function createTreeItem(node) {
+          const li = document.createElement('li');
+          li.className = 'tree-node';
+
+          const isDir = node.type === 'tree';
+          const hasChildren = Array.isArray(node.children) && node.children.length > 0;
+          const safePath = encodeURI(node.path);
+          const repoPathUrl = isDir
+            ? `https://github.com/${owner}/${repo}/tree/${branch}/${safePath}`
+            : `https://github.com/${owner}/${repo}/blob/${branch}/${safePath}`;
+          const siteOpenUrl = isDir
+            ? repoPathUrl
+            : `${siteRoot}${safePath}`;
+
+          const row = document.createElement('div');
+          row.className = 'tree-branch';
+
+          const label = document.createElement('a');
+          label.className = 'tree-label';
+          label.href = isDir ? repoPathUrl : siteOpenUrl;
+          label.target = '_blank';
+          label.rel = 'noopener noreferrer';
+          label.innerHTML = `${isDir ? '📁' : '📄'} <span>${node.name}${isDir ? '/' : ''}</span>`;
+
+          if (!isDir && node.path.toLowerCase().endsWith('.md')) {
+            label.addEventListener('click', (event) => {
+              event.preventDefault();
+              openMarkdownFile(node);
+            });
+          }
+
+          const actions = document.createElement('div');
+          actions.className = 'tree-actions';
+
+          if (isDir && hasChildren) {
+            li.classList.add('is-collapsed');
+
+            const toggleBtn = document.createElement('button');
+            toggleBtn.type = 'button';
+            toggleBtn.className = 'tree-toggle';
+            toggleBtn.setAttribute('aria-label', '展開資料夾');
+            toggleBtn.setAttribute('aria-expanded', 'false');
+            toggleBtn.addEventListener('click', () => {
+              const isCollapsed = li.classList.contains('is-collapsed');
+              const willExpand = isCollapsed;
+              li.classList.toggle('is-collapsed', !willExpand);
+              toggleBtn.setAttribute('aria-expanded', String(willExpand));
+              toggleBtn.setAttribute(
+                'aria-label',
+                willExpand ? '收合資料夾' : '展開資料夾'
+              );
+            });
+            actions.appendChild(toggleBtn);
+          }
+
+          row.appendChild(label);
+          row.appendChild(actions);
+          li.appendChild(row);
+
+          if (isDir && hasChildren) {
+            const childList = document.createElement('ul');
+            childList.className = 'tree-children';
+            node.children.forEach((child) => childList.appendChild(createTreeItem(child)));
+            li.appendChild(childList);
+          }
+
+          return li;
+        }
+
+        async function loadTree() {
+          try {
+            const repoMetaRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+            if (!repoMetaRes.ok) throw new Error('Repository metadata request failed');
+            const repoMeta = await repoMetaRes.json();
+            const defaultBranch = repoMeta.default_branch || branch;
+
+            const treeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/git/trees/${defaultBranch}?recursive=1`);
+            if (!treeRes.ok) throw new Error('GitHub tree request failed');
+
+            const treeData = await treeRes.json();
+            const items = normalizeTree(treeData.tree || []);
+
+            if (!items.length) {
+              treeEl.innerHTML = '<li class="empty-state">目前沒有可顯示的檔案。</li>';
+              return;
+            }
+
+            const roots = buildTreeMap(items);
+            roots.forEach((root) => treeEl.appendChild(createTreeItem(root)));
+          } catch (error) {
+            console.error(error);
+            treeEl.innerHTML = '<li class="empty-state">無法載入目錄資料，請稍後再試。</li>';
+          }
+        }
+
+        async function loadReadme() {
+          try {
+            const repoMetaRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+            if (!repoMetaRes.ok) throw new Error('Repository metadata request failed');
+            const repoMeta = await repoMetaRes.json();
+            const currentBranch = repoMeta.default_branch || branch;
+            const readmeUrl = `https://raw.githubusercontent.com/${owner}/${repo}/${currentBranch}/README.md`;
+            const readmeRes = await fetch(readmeUrl);
+
+            if (!readmeRes.ok) {
+              throw new Error('README fetch failed');
+            }
+
+            const markdown = await readmeRes.text();
+            renderMarkdownContent(markdown, 'README.md');
+          } catch (error) {
+            console.error(error);
+            renderMarkdownContent('無法載入 README.md 內容，請稍後再試。', 'README.md');
+          }
+        }
+
+        loadTree();
+        loadReadme();
+      })();
+    </script>
+  </body>
 </html>
+
