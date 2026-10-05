@@ -41,5 +41,7 @@
 
 ## 報告參考連結
 * [中華民國專利資訊檢索系統](https://tiponet.tipo.gov.tw/twpat1/twpatc/twpatkm?@@0.42910159148903215)
+* [專利主題網](https://www1.tipo.gov.tw/PatentExamGuide/WORD1/0203.html)
+
 ---
 此網站由 jackson 建立 有任何問題請mail 到 [cjs930@gmail.com](mailto:cjs930@gmail.com)
